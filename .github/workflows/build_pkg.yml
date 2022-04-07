@@ -1,0 +1,48 @@
+name: Build app package
+
+on: [ push, pull_request, workflow_dispatch ]
+
+jobs:
+  build_pkg:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Set env vars
+      run: |
+        ver="1.$(git rev-list HEAD --count)"
+        echo "commit_ver=$ver" >> $GITHUB_ENV
+        echo "pkg_file=IV0000-ILLU00001_00-COLORBORDER00000.pkg" >> $GITHUB_ENV
+        echo "llvm_ver=14.0" >> $GITHUB_ENV
+
+    - name: Download OpenOrbis Toolchain
+      run: |
+        oo_ver="v0.5.2"
+        curl -fLO https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain/releases/download/$oo_ver/$oo_ver.tar.gz
+        tar xf $oo_ver.tar.gz
+        echo "OO_PS4_TOOLCHAIN=${GITHUB_WORKSPACE}/OpenOrbis/PS4Toolchain" >> $GITHUB_ENV
+
+    - name: Cache LLVM and Clang
+      id: cache-llvm
+      uses: actions/cache@v3
+      with:
+        path: ./llvm
+        key: llvm-${{ env.llvm_ver }}
+
+    - name: Install LLVM and Clang
+      uses: KyleMayes/install-llvm-action@master
+      with:
+        version: ${{ env.llvm_ver }}
+        cached: ${{ steps.cache-llvm.outputs.cache-hit }}
+
+    - name: Build App Package
+      run: make
+
+    - name: Push package artifact
+      uses: actions/upload-artifact@v3
+      with:
+        path: ${{ env.pkg_file }}
+        if-no-files-found: error
+        retention-days: 7 # don't keep artifacts for too long
