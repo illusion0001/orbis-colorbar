@@ -70,7 +70,7 @@ int main()
         for (int i = 0; i < num_colors; i++) {
             // printf("color_array[i]: %d\n", color_array[i]);
             // draw our colors
-            scene->DrawRectangle(0, 0, bar_width, bar_height, color_array[i]);
+            scene->DrawRectangle(1888 /* align to right */, 0, bar_width, bar_height, color_array[i]);
             // Submit the frame buffer
             scene->SubmitFlip(frameID);
             scene->FrameWait(frameID);
